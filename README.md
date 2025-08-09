@@ -4,6 +4,7 @@ This project is a hardware-agnostic, microservices-based AI system designed to a
 
 # ✨ Features
 
+-   **Model Agnostic**: Easily switch between different open-source models (e.g., Llama 3, Mistral) by changing a variable in the `.env` file.
 -   **Natural Language Interaction**: Ask questions about your expense data in plain English.
 -   **Intelligent Analysis**: The AI can perform tasks like listing expenses, finding the most expensive items, and identifying recent transactions.
 -   **Scalable Architecture**: Built on a microservices design, allowing each component to be scaled independently.
@@ -26,7 +27,7 @@ Follow these steps to set up and run the project on your local machine.
 -   Python 3.10 or newer
 -   Conda for environment management
 -   Docker and Docker Compose
--   A Hugging Face account with approved access to a Llama 3 model.
+-   A Hugging Face account with approved access to the models you wish to use.
 -   A machine with an NVIDIA GPU is highly recommended for reasonable performance.
 
 ### 2. Project Setup
@@ -71,7 +72,7 @@ This project uses a `.env` file to manage configuration and secrets.
 cp .env.example .env
 ```
 
-Now, open the newly created `.env` file and fill in your specific details (like your database password).
+Now, open the newly created `.env` file and fill in your specific details (like your database password and the desired `BASE_MODEL_ID`).
 
 ### 6. Create Database Table
 
@@ -83,7 +84,7 @@ psql -d postgres -U postgres -f schema.sql
 
 ### 7. Hugging Face Authentication
 
-Log in to your Hugging Face account from your terminal. This is required to download the pre-trained Llama 3 model.
+Log in to your Hugging Face account from your terminal. This is required to download the pre-trained models.
 
 ```bash
 huggingface-cli login
@@ -105,7 +106,7 @@ python src/populate_db.py
 
 ### 2. Fine-Tune the Model (Run Once)
 
-Next, run the fine-tuning script to train the LoRA adapter on your specific data. This step is simulated for speed.
+Next, run the fine-tuning script to train the LoRA adapter for the model specified in your `.env` file.
 
 ```bash
 python src/fine_tune.py
@@ -121,10 +122,14 @@ Once the setup is complete, you can start the main application to chat with your
 python src/app.py
 ```
 
-This will load the base Llama 3 model, apply your fine-tuned adapter, and open an interactive prompt in your terminal.
+This will load the base model, apply your fine-tuned adapter, and open an interactive prompt in your terminal.
 
 **Example Prompts:**
 
 -   `List me the top 5 expenses`
 -   `what is the most recent expense?`
 -   `show me 3 latest expenses`
+
+```
+
+```

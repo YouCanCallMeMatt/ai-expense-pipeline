@@ -7,6 +7,7 @@ accelerate
 
 # Data Handling
 pandas
+datasets
 
 # PostgreSQL Database Connector
 psycopg2-binary

@@ -7,27 +7,42 @@ from dotenv import load_dotenv
 from data_processing import get_expense_data
 from model_utils import load_model_and_tokenizer
 
-# Load environment variables
+# Load environment variables from the .env file
 load_dotenv()
 
 
 def main():
     """
     Main application to run interactive inference with the fine-tuned model.
+    This script loads the model and enters a loop to chat with the user.
     """
     # --- Configuration (Now loaded from .env) ---
     base_model_id = os.getenv("BASE_MODEL_ID")
-    adapter_path = "models/lora_adapters/expense_analyzer"
+    # The path to the adapter is dynamically created based on the model name.
+    adapter_path = f"models/lora_adapters/{base_model_id.replace('/', '_')}"
 
-    # ... (rest of the app logic remains the same) ...
+    # --- 1. Load Data for RAG/Context ---
+    # The AI will use this data to answer questions. In a real application,
+    # this might be a more sophisticated search, but here we load it all.
+    expense_data = get_expense_data()
 
-    print(f"Loading model '{base_model_id}' for inference...")
-    # For this simulation, we'll skip the actual model loading to keep it fast.
-    # In the real script, this would call load_model_and_tokenizer.
+    # --- 2. Load the Model and Tokenizer ---
+    try:
+        # Load the base model and apply the fine-tuned adapter on top.
+        model, tokenizer, device = load_model_and_tokenizer(
+            base_model_id, adapter_path=adapter_path
+        )
+    except Exception as e:
+        print(f"\n❌ Error loading model: {e}")
+        print(
+            "Please ensure you have accepted the model's license on Hugging Face and are logged in correctly."
+        )
+        return
 
-    print("\n--- STARTING INTERACTIVE EXPENSE ANALYZER (SIMULATION) ---")
+    print("\n--- STARTING INTERACTIVE EXPENSE ANALYZER ---")
     print("Type 'quit' or 'exit' to end the session.\n")
 
+    # --- 3. Start Interactive Prompt Session ---
     while True:
         try:
             user_prompt = input("Your prompt > ")
@@ -35,12 +50,53 @@ def main():
                 print("Exiting interactive session.")
                 break
 
+            # --- Model-Agnostic Chat Formatting ---
+            # The tokenizer's `apply_chat_template` automatically uses the correct
+            # format (e.g., special tokens) for the loaded model (Llama 3, Mistral, etc.).
+            messages = [
+                {
+                    "role": "system",
+                    "content": "You are an expert expense analysis assistant. Use the provided data to answer the user's question concisely.",
+                },
+                # We provide a snippet of the data as context for the model.
+                {
+                    "role": "user",
+                    "content": f"## Expense Data:\n{str(expense_data[:10])}\n\n## My Question:\n{user_prompt}",
+                },
+            ]
+
+            # This creates the full prompt string ready for the model.
+            full_prompt = tokenizer.apply_chat_template(
+                messages, tokenize=False, add_generation_prompt=True
+            )
+
+            # Convert the text prompt into numbers (tokens) that the model can process.
+            model_inputs = tokenizer(full_prompt, return_tensors="pt").to(device)
+
             print("AI is thinking...")
-            time.sleep(1)
-            print(f"AI Response: This is a simulated response for '{user_prompt}'.\n")
+            start_time = time.time()
+            with torch.no_grad():  # Disables gradient calculations to save memory and speed up inference.
+                # The model generates a sequence of new tokens based on the input.
+                output_ids = model.generate(
+                    **model_inputs,
+                    max_new_tokens=250,
+                    pad_token_id=tokenizer.eos_token_id,
+                )
+            end_time = time.time()
+
+            # Decode only the newly generated tokens to get the clean answer, ignoring the input prompt.
+            response_ids = output_ids[0][model_inputs.input_ids.shape[1] :]
+            final_answer = tokenizer.decode(response_ids, skip_special_tokens=True)
+
+            print(
+                f"\nAI Response (generated in {end_time - start_time:.2f}s):\n{final_answer}\n"
+            )
 
         except KeyboardInterrupt:
             print("\nExiting interactive session.")
+            break
+        except Exception as e:
+            print(f"\nAn error occurred: {e}")
             break
 
 

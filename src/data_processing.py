@@ -9,6 +9,8 @@ from psycopg2.extras import RealDictCursor
 load_dotenv()
 
 # --- Database Connection Details (Now loaded from .env) ---
+# This dictionary securely loads your database credentials from the .env file
+# so you don't have to hardcode them in your script.
 DB_CONFIG = {
     "dbname": os.getenv("DB_NAME"),
     "user": os.getenv("DB_USER"),
@@ -33,7 +35,7 @@ def get_db_connection():
 
 def get_expense_data():
     """
-    Loads expense data by querying the PostgreSQL database.
+    Loads all expense data by querying the PostgreSQL database.
     """
     print("Connecting to database to fetch expense data...")
     conn = get_db_connection()
@@ -41,6 +43,8 @@ def get_expense_data():
         return []
 
     try:
+        # RealDictCursor returns rows as dictionaries (e.g., {'key': 'value'}),
+        # which is perfect for our use case.
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute(
                 "SELECT expense_id, description, category, amount, date FROM expenses ORDER BY date DESC"
@@ -52,5 +56,6 @@ def get_expense_data():
         print(f"❌ Error fetching data from the database: {e}")
         return []
     finally:
+        # It's important to always close the database connection when you're done.
         if conn:
             conn.close()
