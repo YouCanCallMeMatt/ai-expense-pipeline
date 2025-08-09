@@ -1,0 +1,10 @@
+# Core AI and ML Libraries
+torch
+transformers
+peft
+bitsandbytes
+accelerate
+
+# Data Handling
+pandas
+

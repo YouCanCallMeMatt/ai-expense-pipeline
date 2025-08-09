@@ -1,0 +1,40 @@
+# Python virtual environments
+/venv
+/env
+/.env
+
+# Conda environments
+/conda-env/
+/myenv/
+
+# Python cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# IDE and editor directories
+.vscode/
+.idea/
+*.swp
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+
+# Data files - You generally don't want to commit large datasets
+/data/raw/
+/data/processed/
+
+# Model files - Never commit large model files to Git
+/models/
+*.pth
+*.bin
+*.safetensors
+
+# Log files
+*.log
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
