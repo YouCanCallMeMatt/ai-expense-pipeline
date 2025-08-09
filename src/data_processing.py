@@ -1,66 +1,56 @@
 import os
-import random
-from datetime import datetime, timedelta
 
 import pandas as pd
+import psycopg2
+from dotenv import load_dotenv
+from psycopg2.extras import RealDictCursor
+
+# Load environment variables from the .env file in the project root
+load_dotenv()
+
+# --- Database Connection Details (Now loaded from .env) ---
+DB_CONFIG = {
+    "dbname": os.getenv("DB_NAME"),
+    "user": os.getenv("DB_USER"),
+    "password": os.getenv("DB_PASSWORD"),
+    "host": os.getenv("DB_HOST"),
+    "port": os.getenv("DB_PORT"),
+}
 
 
-def generate_fake_expenses(num_records=50):
-    """Generates a list of realistic fake expense records."""
-    categories = ["Travel", "Office Supplies", "Software", "Food", "Utilities"]
-    descriptions = {
-        "Travel": [
-            "Flight to client meeting",
-            "Hotel for conference",
-            "Taxi from airport",
-        ],
-        "Office Supplies": [
-            "Printer paper and ink",
-            "New keyboards",
-            "Whiteboard markers",
-        ],
-        "Software": [
-            "Monthly subscription for CRM",
-            "Annual license for IDE",
-            "Cloud hosting bill",
-        ],
-        "Food": ["Team lunch meeting", "Coffee for the office", "Catering for event"],
-        "Utilities": ["Monthly electricity bill", "Internet service provider bill"],
-    }
-    expenses = []
-    for i in range(num_records):
-        cat = random.choice(categories)
-        expense = {
-            "expense_id": f"E{1001 + i}",
-            "description": random.choice(descriptions[cat]),
-            "category": cat,
-            "amount": round(random.uniform(25.50, 500.75), 2),
-            "date": (datetime.now() - timedelta(days=random.randint(1, 365))).strftime(
-                "%Y-%m-%d"
-            ),
-        }
-        expenses.append(expense)
-    return expenses
-
-
-def get_expense_data(file_path="data/raw/expenses.csv"):
-    """
-    Loads expense data from a CSV file. If the file doesn't exist,
-    it generates new fake data and saves it.
-    """
-    # Ensure the directory exists
-    os.makedirs(os.path.dirname(file_path), exist_ok=True)
-
-    if not os.path.exists(file_path):
+def get_db_connection():
+    """Establishes and returns a connection to the PostgreSQL database."""
+    try:
+        conn = psycopg2.connect(**DB_CONFIG)
+        return conn
+    except psycopg2.OperationalError as e:
+        print(f"❌ Could not connect to the PostgreSQL database: {e}")
         print(
-            f"Data file not found. Generating new fake data and saving to '{file_path}'..."
+            "Please ensure PostgreSQL is running and the .env file details are correct."
         )
-        expenses = generate_fake_expenses(50)
-        df = pd.DataFrame(expenses)
-        df.to_csv(file_path, index=False)
-    else:
-        print(f"Loading data from '{file_path}'...")
-        df = pd.read_csv(file_path)
+        return None
 
-    # Convert dataframe to list of dictionaries for easier processing
-    return df.to_dict("records")
+
+def get_expense_data():
+    """
+    Loads expense data by querying the PostgreSQL database.
+    """
+    print("Connecting to database to fetch expense data...")
+    conn = get_db_connection()
+    if conn is None:
+        return []
+
+    try:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute(
+                "SELECT expense_id, description, category, amount, date FROM expenses ORDER BY date DESC"
+            )
+            expenses = cur.fetchall()
+        print(f"✅ Successfully loaded {len(expenses)} records from the database.")
+        return expenses
+    except Exception as e:
+        print(f"❌ Error fetching data from the database: {e}")
+        return []
+    finally:
+        if conn:
+            conn.close()

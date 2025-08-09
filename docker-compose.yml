@@ -1,0 +1,21 @@
+# This file defines the services for your application, starting with the database.
+# To run this, you need Docker and Docker Compose installed.
+
+version: '3.8'
+
+services:
+  # This defines our PostgreSQL database service
+  db:
+    image: postgres:14-alpine  # Use the official PostgreSQL version 14 image
+    container_name: expense_db_container
+    environment:
+      POSTGRES_DB: postgres # Database name defaults to the user name if not set
+      POSTGRES_USER: postgres # The default superuser for PostgreSQL
+      POSTGRES_PASSWORD: postgres # A common default password for local development
+    ports:
+      - "5432:5432"  # Maps port 5432 on your machine to port 5432 in the container
+    volumes:
+      - postgres_data:/var/lib/postgresql/data # Persists the database data on your local machine
+
+volumes:
+  postgres_data: # Defines the volume to ensure data is not lost when the container stops

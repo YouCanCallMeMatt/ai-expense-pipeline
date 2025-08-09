@@ -8,3 +8,8 @@ accelerate
 # Data Handling
 pandas
 
+# PostgreSQL Database Connector
+psycopg2-binary
+
+# Environment Variable Management
+python-dotenv
