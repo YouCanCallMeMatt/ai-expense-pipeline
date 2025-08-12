@@ -31,10 +31,11 @@ __pycache__/
 *.bin
 *.safetensors
 
-# Log files
+# Log files and training output
 *.log
+/logs/
+/training_output/
 
 # OS-specific files
 .DS_Store
 Thumbs.db
-

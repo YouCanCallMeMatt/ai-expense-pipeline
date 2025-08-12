@@ -22,8 +22,7 @@ def main():
     adapter_path = f"models/lora_adapters/{base_model_id.replace('/', '_')}"
 
     # --- 1. Load Data for RAG/Context ---
-    # The AI will use this data to answer questions. In a real application,
-    # this might be a more sophisticated search, but here we load it all.
+    # The AI will use this data to answer questions.
     expense_data = get_expense_data()
 
     # --- 2. Load the Model and Tokenizer ---
@@ -50,18 +49,23 @@ def main():
                 print("Exiting interactive session.")
                 break
 
-            # --- Model-Agnostic Chat Formatting ---
-            # The tokenizer's `apply_chat_template` automatically uses the correct
-            # format (e.g., special tokens) for the loaded model (Llama 3, Mistral, etc.).
+            # --- UPDATED: More effective RAG prompt template ---
+            # This template is more direct and helps override the model's default safety behavior.
             messages = [
                 {
                     "role": "system",
-                    "content": "You are an expert expense analysis assistant. Use the provided data to answer the user's question concisely.",
+                    "content": "You are a helpful AI assistant that analyzes expense data. You must answer the user's question based *only* on the context provided below. Do not use any outside knowledge. If the answer is not in the context, say that you cannot find the information.",
                 },
-                # We provide a snippet of the data as context for the model.
                 {
                     "role": "user",
-                    "content": f"## Expense Data:\n{str(expense_data[:10])}\n\n## My Question:\n{user_prompt}",
+                    "content": f"""
+                    Context:
+                    Here is the expense data:
+                    {str(expense_data[:20])}
+                    ---
+                    Question:
+                    {user_prompt}
+                    """,
                 },
             ]
 
