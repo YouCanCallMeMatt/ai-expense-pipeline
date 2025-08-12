@@ -3,9 +3,7 @@ from datetime import datetime, timedelta
 
 import psycopg2
 
-from data_processing import (
-    get_db_connection,
-)  # Reuse the connection logic from data_processing.py
+from data_processing import get_db_connection  # Reuse the connection logic
 
 
 def generate_fake_expenses(num_records=50):
@@ -50,10 +48,22 @@ def generate_fake_expenses(num_records=50):
 
 def main():
     """
-    Connects to the database and inserts 50 fake expense records.
+    Connects to the database and inserts a specified number of fake expense records.
     This script should be run once to populate the database with initial data.
     """
-    print("--- Starting Database Population Script ---")
+    # --- NEW: Request input from the user ---
+    user_input = input("Enter the number of records to generate (default is 50): ")
+
+    num_to_generate = 50  # Set the default value
+    if user_input:  # If the user entered something
+        try:
+            # Try to convert the input to an integer
+            num_to_generate = int(user_input)
+        except ValueError:
+            # If the input is not a valid number, use the default
+            print("Invalid input. Using default value of 50.")
+
+    print("\n--- Starting Database Population Script ---")
     conn = get_db_connection()
     if conn is None:
         return
@@ -67,8 +77,8 @@ def main():
                 return
 
             # If the table is empty, generate and insert new data.
-            print("Generating 50 fake expense records...")
-            expenses_to_insert = generate_fake_expenses(50)
+            print(f"Generating {num_to_generate} fake expense records...")
+            expenses_to_insert = generate_fake_expenses(num_to_generate)
 
             insert_query = "INSERT INTO expenses (expense_id, description, category, amount, date) VALUES (%s, %s, %s, %s, %s)"
 
