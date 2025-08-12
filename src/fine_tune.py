@@ -20,7 +20,7 @@ def format_prompt(sample):
 def main():
     """
     Main script to run the fine-tuning process.
-    It now checks if an adapter already exists before starting.
+    It now checks if an adapter already exists and asks the user before re-running.
     """
     print("--- [STAGE 2] Starting Model Fine-Tuning Process ---")
     
@@ -28,15 +28,17 @@ def main():
     base_model_id = os.getenv("BASE_MODEL_ID")
     lora_modules_str = os.getenv("LORA_TARGET_MODULES")
     
-    # --- NEW: Create model-specific paths ---
+    # --- Create model-specific paths ---
     adapter_save_path = f"models/lora_adapters/{base_model_id.replace('/', '_')}"
     training_output_dir = f"./training_output/{base_model_id.replace('/', '_')}"
 
-    # --- NEW: Check if the adapter already exists ---
+    # --- Check if the adapter already exists and ask the user ---
     if os.path.exists(adapter_save_path):
         print(f"✅ Fine-tuned adapter already exists for '{base_model_id}' at '{adapter_save_path}'.")
-        print("Skipping fine-tuning.")
-        return
+        user_input = input("Do you want to run fine-tuning again? This will overwrite the existing adapter. (yes/no): ")
+        if user_input.lower() not in ['yes', 'y']:
+            print("Skipping fine-tuning.")
+            return
 
     if not lora_modules_str:
         print("❌ Error: LORA_TARGET_MODULES not found in .env file. Please define it.")
@@ -112,4 +114,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
